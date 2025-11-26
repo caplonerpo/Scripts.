@@ -1,0 +1,620 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+if LocalPlayer.Name ~= "CapLonerPo" then
+	return
+end
+
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ScannerUI"
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+local function Make(name, class)
+	local i = Instance.new(class)
+	i.Name = name
+	return i
+end
+
+local OpenButton = Make("OpenButton", "TextButton")
+OpenButton.Size = UDim2.new(0, 64, 0, 64)
+OpenButton.Position = UDim2.new(0, 18, 0.8, 0)
+OpenButton.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+OpenButton.Text = "Scan"
+OpenButton.TextColor3 = Color3.fromRGB(235, 235, 235)
+OpenButton.Font = Enum.Font.GothamBold
+OpenButton.TextSize = 17
+OpenButton.AutoButtonColor = true
+OpenButton.BorderSizePixel = 0
+OpenButton.ZIndex = 5
+OpenButton.Parent = ScreenGui
+
+local obCorner = Make("UICorner", "UICorner")
+obCorner.CornerRadius = UDim.new(0, 12)
+obCorner.Parent = OpenButton
+
+local Pulse = Make("Frame", "Frame")
+Pulse.Name = "Pulse"
+Pulse.Size = UDim2.new(1, 0, 1, 0)
+Pulse.BackgroundTransparency = 1
+Pulse.Parent = OpenButton
+
+local MainFrame = Make("MainFrame", "Frame")
+MainFrame.Size = UDim2.new(0, 360, 0, 440)
+MainFrame.Position = UDim2.new(0.5, -180, 0.5, -220)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Make("MainCorner", "UICorner")
+MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.Parent = MainFrame
+
+local TitleBar = Make("TitleBar", "Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 48)
+TitleBar.BackgroundTransparency = 1
+TitleBar.Parent = MainFrame
+
+local Title = Make("Title", "TextLabel")
+Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Position = UDim2.new(0, 16, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Scanner"
+Title.TextColor3 = Color3.fromRGB(245, 245, 245)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 24
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TitleBar
+
+local Close = Make("Close", "TextButton")
+Close.Size = UDim2.new(0, 40, 0, 36)
+Close.Position = UDim2.new(1, -48, 0, 6)
+Close.BackgroundTransparency = 1
+Close.Text = "✕"
+Close.TextColor3 = Color3.fromRGB(220, 80, 80)
+Close.Font = Enum.Font.GothamBold
+Close.TextSize = 20
+Close.Parent = TitleBar
+
+local Minimize = Make("Minimize", "TextButton")
+Minimize.Size = UDim2.new(0, 36, 0, 36)
+Minimize.Position = UDim2.new(1, -92, 0, 6)
+Minimize.BackgroundTransparency = 1
+Minimize.Text = "—"
+Minimize.TextColor3 = Color3.fromRGB(200, 200, 200)
+Minimize.Font = Enum.Font.GothamBold
+Minimize.TextSize = 24
+Minimize.Parent = TitleBar
+
+local Controls = Make("Controls", "Frame")
+Controls.Size = UDim2.new(1, -28, 0, 56)
+Controls.Position = UDim2.new(0, 14, 0, 60)
+Controls.BackgroundTransparency = 1
+Controls.Parent = MainFrame
+
+local SearchBox = Make("SearchBox", "TextBox")
+SearchBox.Size = UDim2.new(0.64, 0, 1, 0)
+SearchBox.Position = UDim2.new(0, 0, 0, 0)
+SearchBox.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+SearchBox.TextColor3 = Color3.fromRGB(235, 235, 235)
+SearchBox.PlaceholderText = "Search for keyword..."
+SearchBox.Font = Enum.Font.GothamBold
+SearchBox.TextSize = 17
+SearchBox.BorderSizePixel = 0
+SearchBox.Parent = Controls
+
+local SearchCorner = Make("SearchCorner", "UICorner")
+SearchCorner.CornerRadius = UDim.new(0, 10)
+SearchCorner.Parent = SearchBox
+
+local SearchBtn = Make("SearchBtn", "TextButton")
+SearchBtn.Size = UDim2.new(0.18, 0, 1, 0)
+SearchBtn.Position = UDim2.new(0.66, 10, 0, 0)
+SearchBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+SearchBtn.Text = "Go"
+SearchBtn.TextColor3 = Color3.fromRGB(235, 235, 235)
+SearchBtn.Font = Enum.Font.GothamBold
+SearchBtn.TextSize = 16
+SearchBtn.BorderSizePixel = 0
+SearchBtn.Parent = Controls
+
+local SearchBtnCorner = Make("SearchBtnCorner", "UICorner")
+SearchBtnCorner.CornerRadius = UDim.new(0, 10)
+SearchBtnCorner.Parent = SearchBtn
+
+local CategoryFrame = Make("CategoryFrame", "Frame")
+CategoryFrame.Size = UDim2.new(0.98, 0, 0, 32)
+CategoryFrame.Position = UDim2.new(0, 8, 0, 64)
+CategoryFrame.BackgroundTransparency = 1
+CategoryFrame.Parent = Controls
+
+local categories = {"All", "Workspace", "ReplicatedStorage", "StarterGui", "StarterPlayer", "Lighting", "PlayerGui"}
+local CatButtons = {}
+local selCategory = "All"
+
+for i,cat in ipairs(categories) do
+	local btn = Make("Cat"..i, "TextButton")
+	btn.Size = UDim2.new(1/#categories, -4, 1, 0)
+	btn.Position = UDim2.new((i-1)/#categories, 4*(i-1), 0, 0)
+	btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	btn.Text = cat
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 13
+	btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+	btn.BorderSizePixel = 0
+	btn.Parent = CategoryFrame
+	local ccorner = Make("ccorner"..i, "UICorner")
+	ccorner.CornerRadius = UDim.new(0, 8)
+	ccorner.Parent = btn
+	btn.Activated:Connect(function()
+		for _,b in pairs(CatButtons) do
+			b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		end
+		btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+		selCategory = cat
+	end)
+	table.insert(CatButtons, btn)
+end
+
+CatButtons[1].BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+
+local OptionsFrame = Make("OptionsFrame", "Frame")
+OptionsFrame.Size = UDim2.new(1, -28, 0, 36)
+OptionsFrame.Position = UDim2.new(0, 14, 0, 106)
+OptionsFrame.BackgroundTransparency = 1
+OptionsFrame.Parent = MainFrame
+
+local HistoryBtn = Make("HistoryBtn", "TextButton")
+HistoryBtn.Size = UDim2.new(0, 120, 0, 30)
+HistoryBtn.Position = UDim2.new(0, 0, 0, 0)
+HistoryBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+HistoryBtn.Text = "History"
+HistoryBtn.Font = Enum.Font.GothamBold
+HistoryBtn.TextSize = 14
+HistoryBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+HistoryBtn.BorderSizePixel = 0
+HistoryBtn.Parent = OptionsFrame
+local histCorner = Make("histCorner", "UICorner")
+histCorner.CornerRadius = UDim.new(0, 8)
+histCorner.Parent = HistoryBtn
+
+local ThemeBtn = Make("ThemeBtn", "TextButton")
+ThemeBtn.Size = UDim2.new(0, 110, 0, 30)
+ThemeBtn.Position = UDim2.new(0, 132, 0, 0)
+ThemeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ThemeBtn.Text = "Theme"
+ThemeBtn.Font = Enum.Font.GothamBold
+ThemeBtn.TextSize = 14
+ThemeBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+ThemeBtn.BorderSizePixel = 0
+ThemeBtn.Parent = OptionsFrame
+local themeCorner = Make("themeCorner", "UICorner")
+themeCorner.CornerRadius = UDim.new(0, 8)
+themeCorner.Parent = ThemeBtn
+
+local SizeMinus = Make("SizeMinus", "TextButton")
+SizeMinus.Size = UDim2.new(0, 36, 0, 30)
+SizeMinus.Position = UDim2.new(1, -86, 0, 0)
+SizeMinus.AnchorPoint = Vector2.new(0, 0)
+SizeMinus.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+SizeMinus.Text = "−"
+SizeMinus.Font = Enum.Font.GothamBold
+SizeMinus.TextSize = 20
+SizeMinus.TextColor3 = Color3.fromRGB(220, 220, 220)
+SizeMinus.BorderSizePixel = 0
+SizeMinus.Parent = OptionsFrame
+local sizeMCorner = Make("sizeMCorner", "UICorner")
+sizeMCorner.CornerRadius = UDim.new(0, 8)
+sizeMCorner.Parent = SizeMinus
+
+local SizePlus = Make("SizePlus", "TextButton")
+SizePlus.Size = UDim2.new(0, 36, 0, 30)
+SizePlus.Position = UDim2.new(1, -44, 0, 0)
+SizePlus.AnchorPoint = Vector2.new(0, 0)
+SizePlus.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+SizePlus.Text = "+"
+SizePlus.Font = Enum.Font.GothamBold
+SizePlus.TextSize = 18
+SizePlus.TextColor3 = Color3.fromRGB(220, 220, 220)
+SizePlus.BorderSizePixel = 0
+SizePlus.Parent = OptionsFrame
+local sizePCorner = Make("sizePCorner", "UICorner")
+sizePCorner.CornerRadius = UDim.new(0, 8)
+sizePCorner.Parent = SizePlus
+
+local Results = Make("Results", "ScrollingFrame")
+Results.Size = UDim2.new(1, -28, 1, -176)
+Results.Position = UDim2.new(0, 14, 0, 148)
+Results.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+Results.BorderSizePixel = 0
+Results.ScrollBarThickness = 8
+Results.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Results.CanvasSize = UDim2.new(0, 0, 0, 0)
+Results.Parent = MainFrame
+
+local ResultsCorner = Make("ResultsCorner", "UICorner")
+ResultsCorner.CornerRadius = UDim.new(0, 10)
+ResultsCorner.Parent = Results
+
+local ResultsLayout = Make("ResultsLayout", "UIListLayout")
+ResultsLayout.Padding = UDim.new(0, 6)
+ResultsLayout.Parent = Results
+
+local LoadingOverlay = Make("LoadingOverlay", "Frame")
+LoadingOverlay.Size = UDim2.new(1, 0, 0, 44)
+LoadingOverlay.Position = UDim2.new(0, 0, 0, 100)
+LoadingOverlay.BackgroundTransparency = 1
+LoadingOverlay.Parent = MainFrame
+
+local LoadingLabel = Make("LoadingLabel", "TextLabel")
+LoadingLabel.Size = UDim2.new(1, -28, 1, 0)
+LoadingLabel.Position = UDim2.new(0, 14, 0, 0)
+LoadingLabel.BackgroundTransparency = 1
+LoadingLabel.Text = ""
+LoadingLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+LoadingLabel.Font = Enum.Font.GothamBold
+LoadingLabel.TextSize = 16
+LoadingLabel.TextXAlignment = Enum.TextXAlignment.Left
+LoadingLabel.Parent = LoadingOverlay
+
+local HistoryPanel = Make("HistoryPanel", "Frame")
+HistoryPanel.Size = UDim2.new(0, 260, 0, 160)
+HistoryPanel.Position = UDim2.new(0, 20, 0, -200)
+HistoryPanel.AnchorPoint = Vector2.new(0, 0)
+HistoryPanel.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+HistoryPanel.Visible = false
+HistoryPanel.BorderSizePixel = 0
+HistoryPanel.Parent = MainFrame
+local historyCorner = Make("historyCorner", "UICorner")
+historyCorner.CornerRadius = UDim.new(0, 10)
+historyCorner.Parent = HistoryPanel
+local historyTitle = Make("historyTitle", "TextLabel")
+historyTitle.Size = UDim2.new(1, -18, 0, 32)
+historyTitle.Position = UDim2.new(0, 9, 0, 8)
+historyTitle.BackgroundTransparency = 1
+historyTitle.Text = "Search History"
+historyTitle.TextColor3 = Color3.fromRGB(230, 230, 230)
+historyTitle.Font = Enum.Font.GothamBold
+historyTitle.TextSize = 16
+historyTitle.TextXAlignment = Enum.TextXAlignment.Left
+historyTitle.Parent = HistoryPanel
+
+local HistoryList = Make("HistoryList", "ScrollingFrame")
+HistoryList.Size = UDim2.new(1, -18, 1, -56)
+HistoryList.Position = UDim2.new(0, 9, 0, 44)
+HistoryList.BackgroundTransparency = 1
+HistoryList.BorderSizePixel = 0
+HistoryList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+HistoryList.ScrollBarThickness = 6
+HistoryList.Parent = HistoryPanel
+local HistoryLayout = Make("HistoryLayout", "UIListLayout")
+HistoryLayout.Padding = UDim.new(0, 6)
+HistoryLayout.Parent = HistoryList
+
+local function makeResultLine(text)
+	local frame = Make("Line", "TextButton")
+	frame.Size = UDim2.new(1, -12, 0, 34)
+	frame.BackgroundTransparency = 1
+	frame.Text = text
+	frame.AutoButtonColor = false
+	frame.TextXAlignment = Enum.TextXAlignment.Left
+	frame.Font = Enum.Font.GothamBold
+	frame.TextSize = 14
+	frame.TextColor3 = Color3.fromRGB(225, 225, 225)
+	frame.ClipsDescendants = true
+	frame.Parent = Results
+	local fc = Make("fc", "UICorner")
+	fc.CornerRadius = UDim.new(0, 6)
+	fc.Parent = frame
+	local btn = Make("Copy", "TextButton")
+	btn.Size = UDim2.new(0, 46, 1, 0)
+	btn.AnchorPoint = Vector2.new(1, 0)
+	btn.Position = UDim2.new(1, -6, 0, 0)
+	btn.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+	btn.Text = "Copy"
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 12
+	btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+	btn.Parent = frame
+	local ccor = Make("cc", "UICorner")
+	ccor.CornerRadius = UDim.new(0, 6)
+	ccor.Parent = btn
+	btn.Activated:Connect(function()
+		local ok, err = pcall(function()
+			if setclipboard then
+				setclipboard(text)
+			else
+				error("no clipboard")
+			end
+		end)
+		if ok then
+			LoadingLabel.Text = "Copied to clipboard"
+			delay(1.2, function() LoadingLabel.Text = "" end)
+		else
+			LoadingLabel.Text = "Unable to auto-copy. Long-press or select text to copy manually."
+			delay(2, function() LoadingLabel.Text = "" end)
+		end
+	end)
+	frame.Activated:Connect(function()
+		LoadingLabel.Text = text
+		delay(2, function() LoadingLabel.Text = "" end)
+	end)
+	return frame
+end
+
+local history = {}
+local currentTheme = "dark"
+local minSize, maxSize = 320, 680
+
+local function applyTheme(theme)
+	if theme == "dark" then
+		MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+		Results.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+		OpenButton.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+		SearchBox.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+		SearchBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+		HistoryPanel.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+	else
+		MainFrame.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+		Results.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+		OpenButton.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+		SearchBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		SearchBtn.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+		HistoryPanel.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+	end
+end
+
+applyTheme(currentTheme)
+
+local dragging = false
+local dragStart, startPos
+
+TitleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+	end
+end)
+
+TitleBar.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+
+local scanning = false
+
+local function clearResults()
+	for _,c in ipairs(Results:GetChildren()) do
+		if c:IsA("TextButton") or c:IsA("TextLabel") then
+			c:Destroy()
+		end
+	end
+end
+
+local function safeGetServicePath(name)
+	local ok, res = pcall(function() return game:FindFirstChild(name) end)
+	if ok and res then
+		return res
+	end
+	return nil
+end
+
+local function deepSearch(root, keyword, out)
+	for _,child in ipairs(root:GetChildren()) do
+		if type(child.Name) == "string" and string.find(string.lower(child.Name), keyword, 1, true) then
+			table.insert(out, child:GetFullName())
+		end
+		deepSearch(child, keyword, out)
+	end
+end
+
+local function getSearchRoots(category)
+	local roots = {}
+	if category == "All" then
+		table.insert(roots, game)
+	else
+		local mapping = {
+			Workspace = game:GetService("Workspace"),
+			ReplicatedStorage = game:GetService("ReplicatedStorage"),
+			StarterGui = game:GetService("StarterGui"),
+			StarterPlayer = game:GetService("StarterPlayer"),
+			Lighting = game:GetService("Lighting"),
+			PlayerGui = LocalPlayer:FindFirstChild("PlayerGui") or PlayerGui
+		}
+		local r = mapping[category]
+		if r then
+			table.insert(roots, r)
+		end
+	end
+	return roots
+end
+
+local function scan(keyword)
+	if scanning then return end
+	if not keyword or keyword:match("^%s*$") then
+		LoadingLabel.Text = "Type something to search"
+		delay(1.4, function() LoadingLabel.Text = "" end)
+		return
+	end
+	scanning = true
+	LoadingLabel.Text = "Scanning..."
+	clearResults()
+	local roots = getSearchRoots(selCategory)
+	local found = {}
+	local lowercase = string.lower(keyword)
+	for _,root in ipairs(roots) do
+		local ok, err = pcall(function()
+			deepSearch(root, lowercase, found)
+		end)
+		if not ok then
+			-- ignore inaccessible roots
+		end
+	end
+	if #found == 0 then
+		LoadingLabel.Text = "No matches found"
+		delay(1.6, function() LoadingLabel.Text = "" end)
+	else
+		for _,v in ipairs(found) do
+			local line = makeResultLine(v)
+			line.Parent = Results
+		end
+		LoadingLabel.Text = ""
+	end
+	table.insert(history, 1, {text = keyword, time = os.time()})
+	if #history > 30 then
+		table.remove(history, 31)
+	end
+	HistoryList:ClearAllChildren()
+	for i,h in ipairs(history) do
+		local b = Make("h"..i, "TextButton")
+		b.Size = UDim2.new(1, -12, 0, 28)
+		b.BackgroundTransparency = 1
+		b.Text = h.text
+		b.Font = Enum.Font.GothamBold
+		b.TextColor3 = Color3.fromRGB(220, 220, 220)
+		b.TextSize = 14
+		b.Parent = HistoryList
+		b.Activated:Connect(function()
+			SearchBox.Text = h.text
+			SearchBtn:Activate()
+		end)
+	end
+	scanning = false
+end
+
+SearchBtn.Activated:Connect(function()
+	local kw = SearchBox.Text
+	LoadingLabel.Text = "Preparing..."
+	delay(0.15, function()
+		scan(kw)
+	end)
+end)
+
+SearchBox.FocusLost:Connect(function(enter)
+	if enter then
+		SearchBtn:Activate()
+	end
+end)
+
+OpenButton.Activated:Connect(function()
+	if MainFrame.Visible then
+		local tween = TweenService:Create(MainFrame, TweenInfo.new(0.22, Enum.EasingStyle.Quad), {Position = UDim2.new(0.5, -180, 0.5, -220), Size = UDim2.new(0, 360, 0, 440)})
+		MainFrame.Visible = true
+		tween:Play()
+	else
+		MainFrame.Position = UDim2.new(0.5, -180, 0.1, -220)
+		MainFrame.Visible = true
+		local tween = TweenService:Create(MainFrame, TweenInfo.new(0.28, Enum.EasingStyle.Quart), {Position = UDim2.new(0.5, -180, 0.5, -220)})
+		tween:Play()
+	end
+end)
+
+Close.Activated:Connect(function()
+	local tween = TweenService:Create(MainFrame, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {Position = UDim2.new(0.5, -180, -0.6, -220)})
+	tween:Play()
+	tween.Completed:Connect(function()
+		MainFrame.Visible = false
+		MainFrame.Position = UDim2.new(0.5, -180, 0.5, -220)
+	end)
+end)
+
+Minimize.Activated:Connect(function()
+	local tween = TweenService:Create(MainFrame, TweenInfo.new(0.22, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 220, 0, 56)})
+	tween:Play()
+	local hideTween = TweenService:Create(Results, TweenInfo.new(0.22), {Size = UDim2.new(1, -28, 1, -176)})
+	hideTween:Play()
+end)
+
+HistoryBtn.Activated:Connect(function()
+	HistoryPanel.Visible = not HistoryPanel.Visible
+end)
+
+ThemeBtn.Activated:Connect(function()
+	if currentTheme == "dark" then
+		currentTheme = "light"
+	else
+		currentTheme = "dark"
+	end
+	applyTheme(currentTheme)
+end)
+
+SizePlus.Activated:Connect(function()
+	local w = MainFrame.Size.X.Offset
+	w = math.clamp(w + 40, minSize, maxSize)
+	MainFrame.Size = UDim2.new(0, w, 0, MainFrame.Size.Y.Offset)
+end)
+
+SizeMinus.Activated:Connect(function()
+	local w = MainFrame.Size.X.Offset
+	w = math.clamp(w - 40, minSize, maxSize)
+	MainFrame.Size = UDim2.new(0, w, 0, MainFrame.Size.Y.Offset)
+end)
+
+local floatDir = 1
+RunService.Heartbeat:Connect(function(dt)
+	local pos = OpenButton.Position
+	local y = pos.Y.Offset + (math.sin(tick()*2.2) * 4)
+	OpenButton.Position = UDim2.new(pos.X.Scale, pos.X.Offset, pos.Y.Scale, y)
+end)
+
+local lastTouch = 0
+OpenButton.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch and tick() - lastTouch > 0.1 then
+		lastTouch = tick()
+		OpenButton:Activate()
+	end
+end)
+
+local function simulateBlur()
+	local overlay = Make("Overlay", "Frame")
+	overlay.Size = UDim2.new(1, 0, 1, 0)
+	overlay.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+	overlay.BackgroundTransparency = 0.68
+	overlay.ZIndex = 2
+	overlay.Parent = ScreenGui
+	local oc = Make("oc", "UICorner")
+	oc.CornerRadius = UDim.new(0, 0)
+	oc.Parent = overlay
+	delay(0.35, function()
+		if overlay and overlay.Parent then
+			overlay:Destroy()
+		end
+	end)
+end
+
+MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+	if MainFrame.Visible then
+		simulateBlur()
+	end
+end)
+
+local function ensureSafeSizing()
+	local sX = math.clamp(MainFrame.Size.X.Offset, minSize, maxSize)
+	local sY = math.clamp(MainFrame.Size.Y.Offset, 260, 900)
+	MainFrame.Size = UDim2.new(0, sX, 0, sY)
+end
+
+MainFrame:GetPropertyChangedSignal("Size"):Connect(ensureSafeSizing)
+
+Players.PlayerRemoving:Connect(function(pl)
+	if pl == LocalPlayer then
+		ScreenGui:Destroy()
+	end
+end)
